@@ -1,0 +1,27 @@
+{
+	"name": "screen-recorder",
+	"version": "1.0.0",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/brunnerh/screen-recorder.git"
+	},
+	"type": "module",
+	"dependencies": {},
+	"devDependencies": {
+		"@sveltejs/vite-plugin-svelte": "^1.1.0",
+		"carbon-components-svelte": "^0.70.12",
+		"carbon-icons-svelte": "^11.4.0",
+		"carbon-preprocess-svelte": "^0.9.1",
+		"devalue": "^4.2.0",
+		"less": "^4.1.3",
+		"svelte": "^3.52.0",
+		"svelte-preprocess": "^4.10.7",
+		"typescript": "^4.8.4",
+		"vite": "^3.2.2"
+	},
+	"scripts": {
+		"dev": "vite",
+		"build": "vite build",
+		"preview": "vite preview"
+	}
+}

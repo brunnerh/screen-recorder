@@ -1,0 +1,37 @@
+// #region Spacing
+@spacings: 0, 2, 4, 8, 12, 16, 24, 32, 40, 48, 64, 80, 96, 160;
+
+.for(@list, @code) {
+	& {
+		.loop(@i:1) when (@i =< length(@list)) {
+			@value: extract(@list, @i);
+
+			@code();
+
+			.loop(@i + 1);
+		}
+
+		.loop();
+	}
+}
+
+.spacing-rule-loop(@className, @property) {
+	.for(@spacings, {
+		.@{className}@{value} {
+			@{property}: ~"@{value}px";
+		}
+	});
+}
+
+.spacing-rule-loop(m, margin);
+.spacing-rule-loop(ml, margin-left);
+.spacing-rule-loop(mr, margin-right);
+.spacing-rule-loop(mt, margin-top);
+.spacing-rule-loop(mb, margin-bottom);
+.spacing-rule-loop(p, padding);
+.spacing-rule-loop(pl, padding-left);
+.spacing-rule-loop(pr, padding-right);
+.spacing-rule-loop(pt, padding-top);
+.spacing-rule-loop(pb, padding-bottom);
+.spacing-rule-loop(gap, gap);
+// #endregion
