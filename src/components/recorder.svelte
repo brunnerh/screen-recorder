@@ -3,6 +3,7 @@
 	import { Pause, Recording, RecordingFilled, Stop } from 'carbon-icons-svelte';
 	import { onDestroy } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
+    import { countdownStore, type CountdownStore } from '../stores/countdown';
     import Flex from './flex.svelte';
 
 	export let recorder: MediaRecorder;
@@ -13,10 +14,9 @@
 	const track = recorder.stream.getVideoTracks()[0];
 
 	let state = recorder.state;
-	let secondsLeft = -1;
+	let countdown: CountdownStore | null = null;
 	let chunks: Blob[] = [];
 
-	let disposing = false;
 	let cleanup: (() => void)[] = [];
 
 	track.addEventListener('ended', onTrackEnded);
@@ -38,7 +38,7 @@
 
 	onDestroy(() =>
 	{
-		disposing = true;
+		countdown?.stop();
 		cleanup.forEach(fn => fn());
 	});
 
@@ -47,24 +47,12 @@
 		if (startDelay > 0)
 		{
 			const startAt = new Date(Date.now() + startDelay * 1000);
-			const countdown = () =>
+			countdown = countdownStore(startAt, () =>
 			{
-				if (disposing)
-					return;
-
-				secondsLeft = Math.ceil((startAt.getTime() - Date.now()) / 1000);
-				if (secondsLeft > 0)
-				{
-					requestAnimationFrame(countdown);
-				}
-				else
-				{
-					secondsLeft = -1;
-					recorder.start();
-				}
-			}
-
-			requestAnimationFrame(countdown);
+				countdown = null;
+				recorder.start();
+			});
+			countdown.start();
 		}
 		else
 		{
@@ -92,14 +80,15 @@
 	<Flex direction="column" alignItems="flex-start" gap="8px">
 		{#if state == 'inactive'}
 			<NumberInput label="Start delay (seconds)"
+				min={0} step={1}
 				bind:value={startDelay} />
 		{/if}
 
 		<div>
 			{#if state == 'inactive'}
 				<Button type="submit" icon={Recording}
-					disabled={secondsLeft >= 0}>
-					{secondsLeft == -1 ? 'Start recording' : 'Starting in ' + secondsLeft}
+					disabled={countdown != null}>
+					{countdown == null ? 'Start recording' : 'Starting in ' + $countdown}
 				</Button>
 			{:else}
 				{#if state == 'recording'}

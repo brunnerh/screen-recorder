@@ -56,6 +56,7 @@
 	const height = localStorageStore('height', 1080);
 	const container = localStorageStore('container', 'video/webm');
 	const codec = localStorageStore('codec', '');
+	const kbps = localStorageStore('kbps', null as number | null);
 	const startDelay = localStorageStore('start-delay', 0);
 
 	coerceContainer();
@@ -67,7 +68,8 @@
 		streamSettings.height !== $height ||
 		streamSettings.fps !== $fps ||
 		streamSettings.container !== $container ||
-		streamSettings.codec !== $codec;
+		streamSettings.codec !== $codec ||
+		streamSettings.kbps !== $kbps;
 
 	const any = (value: any) => value;
 
@@ -79,6 +81,7 @@
 			fps: $fps,
 			container: $container,
 			codec: $codec,
+			kbps: $kbps,
 		};
 	}
 
@@ -142,7 +145,10 @@
 		streamSettings = createSettings();
 		recorder = new MediaRecorder(
 			stream,
-			containers.length > 0 ? { mimeType: `${$container};codecs="${$codec}"` } : { },
+			{
+				mimeType: containers.length == 0 ? undefined : `${$container};codecs="${$codec}"`,
+				bitsPerSecond: $kbps == null ? undefined : ($kbps * 1000),
+			},
 		);
 		settingsChanged = false;
 	}
@@ -195,8 +201,8 @@
 									bind:value={$fps} min={1} step={1} />
 							</Flex>
 
-							{#if containers.length > 0}
-								<Flex gap="8px" alignItems="center" wrap="wrap">
+							<Flex gap="8px" alignItems="center" wrap="wrap">
+								{#if containers.length > 0}
 									<Select labelText="Container" required
 										selected={$container}
 										on:change={e => $container = any(e.detail)}>
@@ -216,8 +222,12 @@
 											{/each}
 										</Select>
 									{/if}
-								</Flex>
-							{/if}
+								{/if}
+
+								<NumberInput label="Kilobits Per Second (kbit/s)"
+									allowEmpty
+									bind:value={$kbps} />
+							</Flex>
 						</Flex>
 
 						{#if recorder && settingsChanged}
