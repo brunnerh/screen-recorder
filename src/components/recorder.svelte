@@ -98,8 +98,7 @@
 		<div>
 			{#if state == 'inactive'}
 				<Button type="submit" icon={Recording}
-					disabled={secondsLeft >= 0}
-					on:click={onStart}>
+					disabled={secondsLeft >= 0}>
 					{secondsLeft == -1 ? 'Start recording' : 'Starting in ' + secondsLeft}
 				</Button>
 			{:else}

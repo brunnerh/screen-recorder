@@ -13,15 +13,18 @@
 		"carbon-icons-svelte": "^11.4.0",
 		"carbon-preprocess-svelte": "^0.9.1",
 		"devalue": "^4.2.0",
+		"gh-pages": "^4.0.0",
 		"less": "^4.1.3",
 		"svelte": "^3.52.0",
 		"svelte-preprocess": "^4.10.7",
+		"touch": "^3.1.0",
 		"typescript": "^4.8.4",
 		"vite": "^3.2.2"
 	},
 	"scripts": {
 		"dev": "vite",
 		"build": "vite build",
-		"preview": "vite preview"
+		"preview": "vite preview",
+		"deploy": "nodetouch out/.nojekyll && gh-pages -d out -t true"
 	}
 }
