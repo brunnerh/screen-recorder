@@ -3,6 +3,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import pkg from './package.json';
 
 export default defineConfig(config => ({
+	base: '/screen-recorder/',
 	define: {
 		GITHUB_URL: JSON.stringify(pkg.repository.url),
 	},
