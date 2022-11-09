@@ -270,7 +270,7 @@
 {/if}
 
 {#if clip != null}
-	<div class="mt8">
+	<div class="mt16">
 		<VideoClip file={clip} />
 	</div>
 {/if}

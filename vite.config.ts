@@ -10,6 +10,12 @@ export default defineConfig(config => ({
 	build: {
 		outDir: 'out',
 	},
+	server: {
+		headers: {
+			'Cross-Origin-Embedder-Policy': 'require-corp',
+			'Cross-Origin-Opener-Policy': 'same-origin',
+		},
+	},
 	plugins: [
 		svelte({ configFile: 'svelte.config.js' }),
 	],

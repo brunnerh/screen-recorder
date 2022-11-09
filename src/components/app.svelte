@@ -63,6 +63,11 @@
 </Content>
 
 <style lang="less">
+	:global(html)
+	{
+		color-scheme: dark;
+	}
+
 	h1 { font-size: inherit; }
 
 	:global {
