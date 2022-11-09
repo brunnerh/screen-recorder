@@ -7,13 +7,15 @@
     import Flex from './flex.svelte';
 
 	export let recorder: MediaRecorder;
-	export let clip: File | null = null;
+	export let state = recorder.state;
 	export let startDelay = 0;
 	
-	const dispatch = createEventDispatcher();
+	const dispatch = createEventDispatcher<{
+		recorded: File,
+		ended: never,
+	}>();
 	const track = recorder.stream.getVideoTracks()[0];
 
-	let state = recorder.state;
 	let countdown: CountdownStore | null = null;
 	let chunks: Blob[] = [];
 
@@ -61,7 +63,8 @@
 	}
 	function onStop()
 	{
-		clip = new File(chunks, '', { type: recorder.mimeType });
+		const clip = new File(chunks, '', { type: recorder.mimeType });
+		dispatch('recorded', clip);
 		chunks = [];
 	}
 	function onData(e: BlobEvent) { chunks.push(e.data) }

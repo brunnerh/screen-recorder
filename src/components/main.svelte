@@ -46,7 +46,11 @@
 	$: currentCodecs = deduplicate(containers.find(item => item.value == $container)?.codecs ?? []);
 
 	let recorder: MediaRecorder | null = null;
+	let recorderSettings = createRecorderSettings();
+	let state: RecordingState | undefined;
 	let clip: File | null = null;
+	let stream: MediaStream | null = null;
+	let streamSettings = createStreamSettings();
 	const fps = localStorageStore('fps', 60);
 	const width = localStorageStore('width', 1920);
 	const height = localStorageStore('height', 1080);
@@ -58,23 +62,29 @@
 	coerceContainer();
 	$: coerceCodec($container);
 
-	let streamSettings = createSettings();
-	$: settingsChanged =
+	$: streamSettingsChanged =
 		streamSettings.width !== $width ||
 		streamSettings.height !== $height ||
-		streamSettings.fps !== $fps ||
-		streamSettings.container !== $container ||
-		streamSettings.codec !== $codec ||
-		streamSettings.kbps !== $kbps;
+		streamSettings.fps !== $fps;
+	$: recorderSettingsChanged =
+		recorderSettings.container !== $container ||
+		recorderSettings.codec !== $codec ||
+		recorderSettings.kbps !== $kbps;
 
 	const any = (value: any) => value;
 
-	function createSettings()
+	function createStreamSettings()
 	{
 		return {
 			width: $width,
 			height: $height,
 			fps: $fps,
+		};
+	}
+
+	function createRecorderSettings()
+	{
+		return {
 			container: $container,
 			codec: $codec,
 			kbps: $kbps,
@@ -131,9 +141,18 @@
 			},
 		};
 
-		const stream = await navigator.mediaDevices.getDisplayMedia(constraints);
-		streamSettings = createSettings();
-		recorder = new MediaRecorder(
+		stream = await navigator.mediaDevices.getDisplayMedia(constraints);
+		streamSettings = createStreamSettings();
+		recorder = createRecorder(stream);
+		recorderSettings = createRecorderSettings();
+	}
+
+	function createRecorder(stream: MediaStream | null)
+	{
+		if (stream == null)
+			return null;
+
+		return new MediaRecorder(
 			stream,
 			{
 				mimeType: containers.length == 0 ? undefined :
@@ -142,7 +161,12 @@
 				bitsPerSecond: $kbps == null ? undefined : ($kbps * 1000),
 			},
 		);
-		settingsChanged = false;
+	}
+
+	function onApplyRecorderSettings()
+	{
+		recorder = createRecorder(stream);
+		recorderSettings = createRecorderSettings();
 	}
 
 	function onStopStream()
@@ -153,83 +177,93 @@
 </script>
 
 <form on:submit|preventDefault={onSelectMedia}>
-	<Flex direction="column" gap="16px" alignItems="flex-start">
-		<Flex direction="column" gap="8px" alignItems="flex-start">
-			<Tooltip triggerText="Settings" align="start">
-				<p>Settings may not be fully respected.</p>
-				<br />
-				<p>The browser may also return a different container than the one selected.</p>
-				<p>E.g., the browser may return a WebM container even if the
-					Matroska container is selected.</p>
-				<p>Note that all WebM files are Matroska files, but not all Matroska files
-					are necessarily WebM files.</p>
-			</Tooltip>
+	<Tooltip triggerText="Stream Settings" align="start">
+		<p>Settings may not be fully respected/approximated by the browser.</p>
+	</Tooltip>
 
-			<Flex gap="8px" alignItems="flex-end" wrap="wrap">
-				<NumberInput label="Width"
-					bind:value={$width} min={1} step={1} />
-				<NumberInput label="Height"
-					bind:value={$height} min={1} step={1} />
-				<NumberInput label="Frame Rate"
-					bind:value={$fps} min={1} step={1} />
-			</Flex>
-
-			<Flex gap="8px" alignItems="center" wrap="wrap">
-				{#if containers.length > 0}
-					<Select labelText="Container" required
-						selected={$container}
-						on:change={e => $container = any(e.detail)}>
-						<option hidden disabled selected={$container == ''} />
-						{#each containers as { label, value }}
-							<option {value} {label} selected={$container == value} />
-						{/each}
-					</Select>
-
-					{#if $container != ''}
-						<Select labelText="Codec"
-							selected={$codec}
-							on:change={e => $codec = any(e.detail)}>
-							{#each currentCodecs as c}
-								<option value={c} label={c} selected={$codec == c} />
-							{/each}
-						</Select>
-					{/if}
-				{/if}
-
-				<NumberInput label="Kilobits Per Second (kbit/s)"
-					allowEmpty placeholder="(Auto)"
-					bind:value={$kbps} />
-			</Flex>
-		</Flex>
-
-		{#if recorder && settingsChanged}
-			<InlineNotification kind="info" class="mt0 mb0"
-				title="Source has to be re-selected for settings to take effect"
-				hideCloseButton lowContrast />
-		{/if}
-
-		<div>
-			<Button type="submit"
-				kind={recorder == null ? 'primary' : 'ghost'}
-				icon={VideoAdd}>
-				Select source
-			</Button>
-
-			{#if recorder != null}
-				<Button kind="ghost" icon={VideoOff}
-					on:click={onStopStream}>
-					Stop stream
-				</Button>
-			{/if}
-		</div>
+	<Flex gap="8px" alignItems="flex-end" wrap="wrap" style="max-width: max-content">
+		<NumberInput label="Width"
+			bind:value={$width} min={1} step={1} />
+		<NumberInput label="Height"
+			bind:value={$height} min={1} step={1} />
+		<NumberInput label="Frame Rate"
+			bind:value={$fps} min={1} step={1} />
 	</Flex>
+
+	{#if recorder && streamSettingsChanged}
+		<InlineNotification kind="info" class="mb0"
+			title="Source has to be re-selected for settings to take effect"
+			hideCloseButton lowContrast />
+	{/if}
+
+	<div class="mt8">
+		<Button type="submit"
+			kind={recorder == null ? 'primary' : 'ghost'}
+			icon={VideoAdd}>
+			Select source
+		</Button>
+
+		{#if recorder != null}
+			<Button kind="ghost" icon={VideoOff}
+				on:click={onStopStream}>
+				Stop stream
+			</Button>
+		{/if}
+	</div>
 </form>
 
 {#if recorder != null}
+	<form class="mt16" on:submit|preventDefault={onApplyRecorderSettings}>
+		<Tooltip triggerText="Recording Settings" align="start">
+			<p>The browser may return a different container than the one selected.</p>
+			<p>E.g., the browser may return a WebM container even if the
+				Matroska container is selected.</p>
+			<p>Note that all WebM files are Matroska files, but not all Matroska files
+				are necessarily WebM files.</p>
+		</Tooltip>
+
+		<Flex gap="8px" alignItems="flex-end" wrap="wrap" style="max-width: max-content">
+			{#if containers.length > 0}
+				<Select labelText="Container" required
+					selected={$container}
+					on:change={e => $container = any(e.detail)}>
+					<option hidden disabled selected={$container == ''} />
+					{#each containers as { label, value }}
+						<option {value} {label} selected={$container == value} />
+					{/each}
+				</Select>
+
+				{#if $container != ''}
+					<Select labelText="Codec"
+						selected={$codec}
+						on:change={e => $codec = any(e.detail)}>
+						{#each currentCodecs as c}
+							<option value={c} label={c} selected={$codec == c} />
+						{/each}
+					</Select>
+				{/if}
+			{/if}
+
+			<NumberInput label="Kilobits Per Second (kbit/s)"
+				min={0} allowEmpty placeholder="(Auto)"
+				bind:value={$kbps} />
+
+			<Button type="submit" kind="secondary"
+				disabled={
+					recorderSettingsChanged == false ||
+					state != 'inactive'
+				}>
+				Apply
+			</Button>
+		</Flex>
+	</form>
+
 	<div class="mt16">
 		{#key recorder}
 			<Recorder {recorder}
-				bind:clip bind:startDelay={$startDelay}
+				bind:state
+				bind:startDelay={$startDelay}
+				on:recorded={e => clip = e.detail}
 				on:ended={onStopStream} />
 		{/key}
 	</div>
