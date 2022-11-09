@@ -9,13 +9,12 @@
 	import VideoClip from './video-clip.svelte';
 	import { localStorageStore } from '../stores/storage-store';
 
-	export let githubUrl: string | null = null;
-	
 	// https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Video_codecs#common_codecs
 	const h263 = ['H.263', 'H263'];
 	const h264 = ['AVC', 'H.264', 'H264'];
 	const h265 = ['HEVC', 'H.265', 'H265'];
 	const codecs = [
+		'',
 		...h263,
 		...h264,
 		...h265,
@@ -137,7 +136,9 @@
 		recorder = new MediaRecorder(
 			stream,
 			{
-				mimeType: containers.length == 0 ? undefined : `${$container};codecs="${$codec}"`,
+				mimeType: containers.length == 0 ? undefined :
+					$codec == '' ? $container :
+					`${$container};codecs="${$codec}"`,
 				bitsPerSecond: $kbps == null ? undefined : ($kbps * 1000),
 			},
 		);
@@ -185,10 +186,9 @@
 					</Select>
 
 					{#if $container != ''}
-						<Select labelText="Codec" required
+						<Select labelText="Codec"
 							selected={$codec}
 							on:change={e => $codec = any(e.detail)}>
-							<option hidden disabled selected={$codec == ''} />
 							{#each currentCodecs as c}
 								<option value={c} label={c} selected={$codec == c} />
 							{/each}
@@ -197,7 +197,7 @@
 				{/if}
 
 				<NumberInput label="Kilobits Per Second (kbit/s)"
-					allowEmpty
+					allowEmpty placeholder="(Auto)"
 					bind:value={$kbps} />
 			</Flex>
 		</Flex>
