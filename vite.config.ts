@@ -1,10 +1,12 @@
-import { createWriteStream, fstat } from 'fs';
-import { dirname, join } from 'path';
-import { defineConfig, Plugin } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import archiver from 'archiver';
-import pkg from './package.json';
+import { createWriteStream } from 'fs';
+import { dirname, join } from 'path';
 import shell from 'shelljs';
+import { defineConfig } from 'vite';
+import pkg from './package.json';
+import { electronZip } from './src/plugins/electron-package';
+import { extractFonts } from './src/plugins/extract-fonts';
 
 /**
  * Headers for enabling access to {@link SharedArrayBuffer}.  
@@ -26,13 +28,14 @@ const output: Record<Platform, string> = {
 	'web': 'out/web',
 };
 
+const fonts = new Set<string>();
+
 export default defineConfig(config =>
 {
-	console.log('Command: ', config.command);
-
+	const { mode, command } = config;
 	const bases: Record<Platform, string> = {
 		'electron': './',
-		'web': config.mode == 'production' ? '/screen-recorder/' : '/',
+		'web': mode == 'production' ? '/screen-recorder/' : '/',
 	};
 	const base = bases[platform];
 
@@ -51,38 +54,9 @@ export default defineConfig(config =>
 		preview: { headers },
 		plugins: [
 			svelte({ configFile: 'svelte.config.js' }),
-			platform == 'web' && config.command == 'build' ? {
-				name: 'electron-package',
-				async closeBundle()
-				{
-					try
-					{
-						const name = 'screen-recorder-win32-x64';
-	
-						const path = join(__dirname, 'out', 'web', 'desktop', `${name}.zip`);
-						shell.mkdir('-p', dirname(path));
-						const stream = createWriteStream(path, { flags: 'w' });
-						const zip = archiver('zip');
-						zip.pipe(stream);
-						zip.on('warning', e => console.warn(e));
-						zip.on('error', e => { throw e; });
-	
-						const winDirectory = join(__dirname, 'out', name);
-						zip.directory(winDirectory, name);
-	
-						await new Promise<void>(async (res, rej) =>
-						{
-							stream.on('close', res);
-	
-							await zip.finalize();
-						}).finally(() => stream.close());
-					}
-					catch (error)
-					{
-						console.error('Error while creating electron package', error);
-					}
-				}
-			} : null,
+			extractFonts({ command, cacheDir: '.fonts' }),
+			platform == 'web' && command == 'build' ?
+				electronZip({ outDir: join(__dirname, 'out')}) : null,
 		].filter(x => x != null),
 	}
 });
