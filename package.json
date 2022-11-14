@@ -28,7 +28,6 @@
 		"shx": "^0.3.4",
 		"svelte": "^3.52.0",
 		"svelte-preprocess": "^4.10.7",
-		"touch": "^3.1.0",
 		"typescript": "^4.8.4",
 		"undici": "^5.12.0",
 		"vite": "^3.2.2"
@@ -47,6 +46,6 @@
 		"watch:electron-app": "vite build --config vite.electron.config.ts --mode=development -w",
 		"start:electron-app": "electron ./out/electron/app/main.cjs",
 		"package:electron-app": "electron-packager out/electron screen-recorder --platform=win32 --arch=x64 --out=out --overwrite",
-		"deploy": "nodetouch out/web/.nojekyll && gh-pages -d out/web -t true"
+		"deploy": "shx touch out/web/.nojekyll && gh-pages -d out/web -t true"
 	}
 }

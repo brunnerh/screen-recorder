@@ -83,7 +83,7 @@
 	<Flex direction="column" alignItems="flex-start" gap="8px">
 		{#if state == 'inactive'}
 			<NumberInput label="Start delay (seconds)"
-				min={0} step={1}
+				min={0} step={1} allowEmpty placeholder="0"
 				bind:value={startDelay} />
 		{/if}
 
