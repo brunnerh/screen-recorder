@@ -5,7 +5,7 @@ import { dirname, join } from 'path';
 import shell from 'shelljs';
 import { defineConfig } from 'vite';
 import pkg from './package.json';
-import { electronZip } from './src/plugins/electron-package';
+import { electronZip } from './src/plugins/electron-zip';
 import { extractFonts } from './src/plugins/extract-fonts';
 
 /**
@@ -28,7 +28,7 @@ const output: Record<Platform, string> = {
 	'web': 'out/web',
 };
 
-const fonts = new Set<string>();
+const electronDir = 'screen-recorder-win32-x64';
 
 export default defineConfig(config =>
 {
@@ -39,10 +39,13 @@ export default defineConfig(config =>
 	};
 	const base = bases[platform];
 
+	const showDownloads = shell.test('-e', join(__dirname, 'out', electronDir));
+
 	return {
 		base,
 		define: {
 			BASE: JSON.stringify(base),
+			SHOW_DOWNLOADS: JSON.stringify(showDownloads),
 			PLATFORM: JSON.stringify(platform),
 			GITHUB_URL: JSON.stringify(pkg.repository.url),
 		},
@@ -55,8 +58,11 @@ export default defineConfig(config =>
 		plugins: [
 			svelte({ configFile: 'svelte.config.js' }),
 			extractFonts({ command, cacheDir: '.fonts' }),
-			platform == 'web' && command == 'build' ?
-				electronZip({ outDir: join(__dirname, 'out')}) : null,
+			showDownloads && platform == 'web' && command == 'build' ?
+				electronZip({
+					outDir: join(__dirname, 'out'),
+					directories: [electronDir],
+				}) : null,
 		].filter(x => x != null),
 	}
 });

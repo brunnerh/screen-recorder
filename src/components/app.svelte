@@ -39,7 +39,7 @@
 
 	<HeaderUtilities>
 		<!-- svelte-ignore missing-declaration -->
-		{#if PLATFORM == 'web'}
+		{#if SHOW_DOWNLOADS && PLATFORM == 'web'}
 			<HeaderGlobalAction
 				icon={Download}
 				title="Desktop application downloads"
