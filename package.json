@@ -47,7 +47,6 @@
 		"watch:electron-app": "vite build --config vite.electron.config.ts --mode=development -w",
 		"start:electron-app": "electron ./out/electron/app/main.cjs",
 		"package:electron-app": "electron-packager out/electron screen-recorder --platform=win32 --arch=x64 --out=out --overwrite",
-		"clean:build": "shx rm -rf out/screen-recorder-win32-x64",
-		"deploy": "npm run clean:build && nodetouch out/.nojekyll && gh-pages -d out -t true"
+		"deploy": "nodetouch out/web/.nojekyll && gh-pages -d out/web -t true"
 	}
 }
