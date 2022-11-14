@@ -4,10 +4,13 @@
 		ProgressBar, TextInput,
 	} from 'carbon-components-svelte';
 	import { createFFmpeg, type FFmpeg } from '@ffmpeg/ffmpeg';
+	import core from '@ffmpeg/core/dist/ffmpeg-core.js?raw';
+	import coreWasm from '@ffmpeg/core/dist/ffmpeg-core.wasm?url';
+	import coreWorker from '@ffmpeg/core/dist/ffmpeg-core.worker.js?url';
 	import { scrollToBottom } from '../actions/scroll-to-bottom';
 	import Flex from './flex.svelte';
-    import { Gif } from 'carbon-icons-svelte';
-	
+	import { Gif } from 'carbon-icons-svelte';
+
 	export let file: File;
 
 	let open = true;
@@ -37,7 +40,13 @@
 
 			let errorMessage = false;
 
-			ffmpeg = createFFmpeg({ log: true });
+			const getFileName = (url: string) => url.split('/').pop();
+			const resolvedCore = core
+				.replaceAll('ffmpeg-core.wasm', `${BASE}/assets/${getFileName(coreWasm)}`)
+				.replaceAll('ffmpeg-core.worker.js', `${BASE}/assets/${getFileName(coreWorker)}`);
+			const blob = new Blob([resolvedCore], { type: 'application/javascript' });
+			const corePath = URL.createObjectURL(blob);
+			ffmpeg = createFFmpeg({ log: true, corePath });
 			await ffmpeg.load();
 			ffmpeg.setLogger(msg =>
 			{

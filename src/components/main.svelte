@@ -177,18 +177,21 @@
 </script>
 
 <form on:submit|preventDefault={onSelectMedia}>
-	<Tooltip triggerText="Stream Settings" align="start">
-		<p>Settings may not be fully respected/approximated by the browser.</p>
-	</Tooltip>
+	<!-- svelte-ignore missing-declaration -->
+	{#if PLATFORM == 'web'}
+		<Tooltip triggerText="Stream Settings" align="start">
+			<p>Settings may not be fully respected/approximated by the browser.</p>
+		</Tooltip>
 
-	<Flex gap="8px" alignItems="flex-end" wrap="wrap" style="max-width: max-content">
-		<NumberInput label="Width"
-			bind:value={$width} min={1} step={1} />
-		<NumberInput label="Height"
-			bind:value={$height} min={1} step={1} />
-		<NumberInput label="Frame Rate"
-			bind:value={$fps} min={1} step={1} />
-	</Flex>
+		<Flex gap="8px" alignItems="flex-end" wrap="wrap" style="max-width: max-content">
+			<NumberInput label="Width"
+				bind:value={$width} min={1} step={1} />
+			<NumberInput label="Height"
+				bind:value={$height} min={1} step={1} />
+			<NumberInput label="Frame Rate"
+				bind:value={$fps} min={1} step={1} />
+		</Flex>
+	{/if}
 
 	{#if recorder && streamSettingsChanged}
 		<InlineNotification kind="info" class="mb0"
@@ -238,7 +241,7 @@
 						selected={$codec}
 						on:change={e => $codec = any(e.detail)}>
 						{#each currentCodecs as c}
-							<option value={c} label={c} selected={$codec == c} />
+							<option value={c} label={c == '' ? '(Auto)' : c} selected={$codec == c} />
 						{/each}
 					</Select>
 				{/if}

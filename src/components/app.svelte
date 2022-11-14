@@ -2,13 +2,11 @@
 	import 'carbon-components-svelte/css/g90.css';
 	import '../styles/layout.less';
 	import {
-		Column, Content, Grid, Header, HeaderActionLink, HeaderUtilities,
+		Column, Content, Grid, Header, HeaderGlobalAction, HeaderActionLink, HeaderUtilities,
 		InlineNotification, OutboundLink, Row, SkipToContent,
 	} from 'carbon-components-svelte';
-	import { LogoGithub } from 'carbon-icons-svelte';
+	import { Download, LogoGithub } from 'carbon-icons-svelte';
 	import Main from './main.svelte';
-
-	export let githubUrl: string | null = null;
 
 	const errors = [
 		{
@@ -22,6 +20,13 @@
 			href: 'https://caniuse.com/mdn-api_mediarecorder',
 		},
 	].filter(error => error.condition);
+
+	async function onDownload()
+	{
+		const { default: DesktopDownloadsDialog } = await import('./desktop-downloads-dialog.svelte');
+		const dialog = new DesktopDownloadsDialog({ target: document.body });
+		dialog.$on('close', () => setTimeout(() => dialog.$destroy(), 1000));
+	}
 </script>
 
 <Header>
@@ -33,8 +38,20 @@
 	</div>
 
 	<HeaderUtilities>
-		{#if githubUrl}
-			<HeaderActionLink href={githubUrl} icon={LogoGithub}/>
+		<!-- svelte-ignore missing-declaration -->
+		{#if PLATFORM == 'web'}
+			<HeaderGlobalAction
+				icon={Download}
+				title="Desktop application downloads"
+				on:click={onDownload}/>
+		{/if}
+
+		<!-- svelte-ignore missing-declaration -->
+		{#if GITHUB_URL}
+			<HeaderActionLink
+				href={GITHUB_URL} target="_blank" rel="noopener noreferrer"
+				icon={LogoGithub}
+				title="GitHub repository" />
 		{/if}
 	</HeaderUtilities>
 </Header>
